@@ -1,0 +1,8 @@
+---
+nfdump_install_state: present
+sflow_extensions: all
+sflow_port: 1793  # RANDOM
+sflow_buffer_size: 128*1024
+sflow_data_path: /var/spool/sflow
+sflow_user: sflow
+sflow_group: sflow

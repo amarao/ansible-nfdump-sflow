@@ -1,0 +1,7 @@
+---
+- name: start sfcapd
+  become: true
+  systemd: name=sfcapd state=started daemon_reload=true enabled=true
+- name: restart sfcapd
+  become: true
+  systemd: name=sfcapd state=restarted daemon_reload=true enabled=true

@@ -1,0 +1,50 @@
+---
+- name: nfdump-sflow | Create group
+  become: true
+  group:
+    name: '{{ sflow_group }}'
+    system: true
+  when: sflow_group
+- name: nfdump-sflow | Create  user
+  become: true
+  user:
+    create_home: false
+    append: true
+    name: '{{ sflow_user }}'
+    group: '{{ sflow_group }}'
+    shell: /bin/false
+    system: true
+  when: sflow_user
+- name: nfdump-sflow | Install nfdump-sflow package
+  become: true
+  apt: name=nfdump-sflow state={{nfdump_install_state}}
+  notify:
+    - start sfcapd
+    - restart sfcapd
+- name: nfdump-sflow | Create directory for sflow
+  become: true
+  file:
+    path: '{{ sflow_data_path }}'
+    state: directory
+    owner: '{{ sflow_user or omit }}'
+    group: '{{ sflow_group or omit }}'
+- name: nfdump-sflow | Configure sfcapd systemd service
+  become: true
+  copy:
+    content: |
+      [Unit]
+      Description=sFlow capture service
+      Documentation=man:sfcapd
+
+      [Service]
+      Type=simple
+      ExecStart=/usr/bin/sfcapd sfcapd -w -T{{ sflow_extensions }} all -p {{ sflow_port }} -B {{ sflow_buffer_size }} -l {{ sflow_data_path }}
+      Restart=always
+      {% if sflow_user %}User={{ sflow_user }}{% endif %}
+
+      [Install]
+      WantedBy=multi-user.target
+
+    dest: /etc/systemd/system/sfcapd.service
+  notify:
+    - restart sfcapd
